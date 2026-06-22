@@ -1,5 +1,14 @@
+// Load environment variables from .env into process.env
+// This MUST be one of the very first lines, before anything tries to use process.env 
+require("dotenv").config();
+
+
 // Import the Express library we installed earlier
 const express  = require("express");
+const connectDB = require("./config/db");
+
+// Connects to MongoDB before the app starts handling requests 
+connectDB();
 
 // Create the Express application
 const app = express();
@@ -9,12 +18,13 @@ app.get("/", (req,res)=>{
     res.send("Shoppy-Globe Api is running");
 });
 
-// Port the server will listen on
-const PORT = 5000;
+// Port comes from .env, falls back to 5100 if not set (good practice)
+const PORT = process.env.PORT || 5100;
 
 // Start the server and listen for incoming requests
 app.listen(PORT,()=>{
     console.log(`Server is running on http://localhost:${PORT}`);
+    require("dotenv").config();
 });
 
 
