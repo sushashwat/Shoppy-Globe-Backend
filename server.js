@@ -4,6 +4,7 @@ require("dotenv").config();
 
 // Import the Express library we installed earlier
 const express  = require("express");
+const cors = require("cors");
 const connectDB = require("./config/db");
 const productRoutes = require("./routes/productRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -12,6 +13,10 @@ connectDB();
 
 // Create the Express application
 const app = express();
+
+app.use(cors({
+    origin: "*",
+}));
 
 // Express can read JSON request bodies
 app.use(express.json());
