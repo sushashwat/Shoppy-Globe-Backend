@@ -1,4 +1,4 @@
-const mongoose = require ("mongoose");
+const mongoose = require("mongoose");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 
@@ -7,13 +7,9 @@ const Product = require("../models/Product");
 
 const getCart = async (req,res) => {
     try{
-         // req.user comes from the "protect" middleware — it already
-         // figured out who's making this request before we got here
          const cartItems = await Cart.find({user: req.user._id}).populate(
             "product",
             "name price description stock imageUrl"
-             // ^ this tells mongoose: "instead of just the product's _id,
-            // fetch the full product document, but only these fields"
          );
 
          res.status(200).json({
@@ -39,7 +35,6 @@ const getCart = async (req,res) => {
 const addToCart = async (req,res) => {
     try{
         const{productId , quantity = 1} = req.body;
-        // Validate the ID format before even hitting the database
         if(!mongoose.Types.ObjectId.isValid(productId)){
             return res.status(400).json({
                 success: false,
@@ -47,8 +42,6 @@ const addToCart = async (req,res) => {
             });
         } 
 
-        // This is the "check if product ID exists before adding to cart"
-        // validation your brief specifically asks for  
         const product = await Product.findById(productId);
         if(!product){
             return res.status(400).json({
@@ -63,21 +56,17 @@ const addToCart = async (req,res) => {
                 message: `Insufficient stock for "${product.name}" . Available:${product.stock}`,
             });
         }   
-        // Check if this exact user already has this exact product in their cart
         let cartItem = await Cart.findOne({user: req.user._id, product: productId});
         if(cartItem){
-            // Already in cart - just bump the quantity
             cartItem.quantity += Number(quantity);
             await cartItem.save();  
         } else{
-            // Not in cart yet - create a new cart entry
             cartItem = await Cart.create({
                 user: req.user._id,
                 product: productId,
                 quantity,
             });
         }
-        // Populate product details before sending the response back 
         cartItem = await cartItem.populate("product", "name price description stock imageUrl");
 
         res.status(201).json({
@@ -96,7 +85,6 @@ const addToCart = async (req,res) => {
 
 // @route   PUT /cart/:id
 // @desc    Update the quantity of a specific cart item.
-//          :id here refers to the Cart document's own _id.
 
 const updateCartItem = async (req,res) =>{
     try{
@@ -110,10 +98,6 @@ const updateCartItem = async (req,res) =>{
             });
         }
     
-    
-    // Important: we filter by BOTH the cart item's _id AND req.user._id —
-    // this makes sure a user can only update THEIR OWN cart items,
-    // not someone else's, even if they guess a valid cart item ID    
     const cartItem = await Cart.findOne({_id:id, user:req.user._id});
     if(!cartItem){
         return res.status(404).json({
@@ -147,7 +131,7 @@ const updateCartItem = async (req,res) =>{
 };
 
 // @route  DELETE /cart/:id
-// @desc   Remove  a specified item from the cart.
+// @desc   Remove a specified item from the cart.
 const removeFromCart = async (req,res) => {
     try{
         const{id} = req.params;                                                             
@@ -158,7 +142,6 @@ const removeFromCart = async (req,res) => {
                 message:"Invalid cart item ID format",
             });
         }
-        // Again - scoped to req.user._id, so users can only delete their own items 
         const cartItem  = await Cart.findOneAndDelete({_id:id, user: req.user._id});
         if(!cartItem){
             return res.status(404).json({
@@ -180,5 +163,22 @@ const removeFromCart = async (req,res) => {
     }
 };
 
-module.exports = {getCart, addToCart,updateCartItem, removeFromCart};
+// @route  DELETE /cart
+// @desc   Clear the ENTIRE cart for the logged-in user (used after an order is placed)
+const clearCart = async (req, res) => {
+    try {
+        await Cart.deleteMany({ user: req.user._id });
+        res.status(200).json({
+            success: true,
+            message: "Cart cleared",
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to clear cart",
+            error: error.message,
+        });
+    }
+};
 
+module.exports = {getCart, addToCart, updateCartItem, removeFromCart, clearCart};
