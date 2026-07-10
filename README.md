@@ -1,3 +1,4 @@
+> 🔗 Frontend repo: [shoppyglobe-frontend](https://github.com/sushashwat/Shoppy-Globe)
 # ShoppyGlobe Backend
 
 Backend REST API for the ShoppyGlobe e-commerce application, built with Node.js, Express, and MongoDB. Built as part of the "Build APIs with Node.js and Express.js for Shoppyglobe E-commerce" project.
